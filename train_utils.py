@@ -106,7 +106,7 @@ def train_model(model, batch_size, epochs, test_batch_size = None, device="cpu",
             if verbosity>=3:
                 print(loss)
 
-            if False and verbosity>=2 and (batch_id % print_every_n) == 0:
+            if verbosity>=2 and (batch_id % print_every_n) == 0:
                 # if verbosity >= 3:
                 #     print(loss)
                 # print('hallo')
