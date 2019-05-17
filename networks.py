@@ -63,15 +63,15 @@ class TimeDependentConv(nn.Module):
         """
         super(TimeDependentConv, self).__init__()
         # time_dependent = True
-        self.time_independent_debug = True
+        # self.time_independent_debug = False
 
-        self.time_dependent = time_dependent or self.time_independent_debug
+        self.time_dependent = time_dependent #or self.time_independent_debug
 
         self.conv_layer = nn.Conv2d(channels + self.time_dependent, channels, kernel_size=kernel_size, padding=True)
 
     def forward(self, x, t):
-        if self.time_independent_debug:
-            t = 0
+        # if self.time_independent_debug:
+        #     t = 0
 
         if self.time_dependent:
             # print(t)
