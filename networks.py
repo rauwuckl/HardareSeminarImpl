@@ -3,16 +3,6 @@ import torch.nn as nn
 from torch.autograd import Variable
 from torchdiffeq import odeint_adjoint as odeint
 
-# Import Deep500
-import deep500 as d5
-from deep500.frameworks import tensorflow as d5pt
-
-import deep500.networks as d5nt
-import deep500.datasets as d5ds
-
-
-# Set up opimizer
-from deep500.frameworks import reference as d5ref
 
 class Flatten(nn.Module):
     def forward(self, input):
@@ -26,12 +16,13 @@ class ResidualBlock(nn.Module):
         return nn.Conv2d(self.n_channels, self.n_channels, kernel_size=self.kernel_size, stride=1, padding=True)
 
 
-    def __init__(self, n_channels, kernel_size=3):
+    def __init__(self, n_channels, kernel_size=3, cache_last_activation=False):
 
         super(ResidualBlock, self).__init__()
 
         self.n_channels = n_channels
         self.kernel_size = kernel_size
+        self.cache_last_activation = cache_last_activation
 
         # self.relu_layer1 = nn.ReLU(inplace=True) #TODO
         self.norm_layer1 = self.norm()
@@ -53,7 +44,12 @@ class ResidualBlock(nn.Module):
         x = self.relu_layer2(x)
         x = self.conv_layer2(x)
 
-        return x + skip
+        out =  x + skip
+
+        if self.cache_last_activation:
+            self.cache_last_activation = out
+
+        return out
 
 class TimeDependentConv(nn.Module):
     # a convolution that also depends on the t parameter, (by appending a constant channel with value t in all pixels)
