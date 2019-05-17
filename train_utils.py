@@ -116,7 +116,7 @@ def train_model(model, batch_size, epochs, test_batch_size = None, device="cpu",
         test_acc = compute_accuracy(model, test_loader, device=device)
         epoch_test_accuracies[epoch_nr] = test_acc
 
-        train_acc = compute_accuracy(model, train_loader)
+        train_acc = compute_accuracy(model, train_loader, device=device)
         epoch_train_accuracies[epoch_nr] = train_acc
         if verbosity >= 1:
             print("Epoch {}>> Train Accuracy: {} | Test Accuracy: {}")
