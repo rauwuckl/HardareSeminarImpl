@@ -50,6 +50,7 @@ def compute_accuracy(model, data_loader, device):
 
 def train_model_cached(model, file_path=None, **kwargs):
     print("Experiment {}".format(file_path))
+    print(model)
     if file_path and os.path.isfile(file_path):
         saved = torch.load(file_path)
         restored_args = saved['args']
@@ -106,7 +107,7 @@ def train_model(model, batch_size, epochs, test_batch_size = None, device="cpu",
             if verbosity>=3:
                 print(loss)
 
-            if verbosity>=2 and (batch_id % print_every_n) == 0:
+            if verbosity==2 and (batch_id % print_every_n) == 0:
                 # if verbosity >= 3:
                 #     print(loss)
                 # print('hallo')

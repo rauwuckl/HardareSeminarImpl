@@ -62,14 +62,19 @@ class TimeDependentConv(nn.Module):
         :param time_dependent: if False, the t gets ignored in the forward pass
         """
         super(TimeDependentConv, self).__init__()
-        self.time_dependent = time_dependent
+        # time_dependent = True
+        self.time_independent_debug = True
 
-        self.conv_layer = nn.Conv2d(channels+time_dependent, channels, kernel_size=kernel_size, padding=True)
+        self.time_dependent = time_dependent or self.time_independent_debug
+
+        self.conv_layer = nn.Conv2d(channels + self.time_dependent, channels, kernel_size=kernel_size, padding=True)
 
     def forward(self, x, t):
+        if self.time_independent_debug:
+            t = 0
 
         if self.time_dependent:
-            batchsize, channels, dim_x, dim_y = x.shape
+            # print(t)
             time_channel = torch.ones_like(x[:, :1, :, :]) * t # trick to get right shape, data type and device
             with_time = torch.cat((x, time_channel), 1)
         else:
