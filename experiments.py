@@ -5,7 +5,7 @@ from train_utils import *
 n_epochs = 23
 batch_size = 128
 batch_size_test = 1028
-device="cpu"
+device="cuda"
 
 # Baseline ResNet
 standard_ode = nn.Sequential(*get_downsampling_layers(), ODEBlock(ConvolutionalDynamicsFunction(64, time_dependent=True), device=device), *get_final_layers())

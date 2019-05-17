@@ -70,7 +70,7 @@ class TimeDependentConv(nn.Module):
 
         if self.time_dependent:
             batchsize, channels, dim_x, dim_y = x.shape
-            time_channel = torch.ones((batchsize, 1 ,dim_x, dim_y)) * t
+            time_channel = torch.ones_like(x[:, :1, :, :]) * t # trick to get right shape, data type and device
             with_time = torch.cat((x, time_channel), 1)
         else:
             with_time = x
@@ -105,7 +105,7 @@ class ConvolutionalDynamicsFunction(nn.Module):
         self.relu_layer2 = nn.ReLU(inplace=True)
         self.conv_layer2 = self.conv()
 
-        self.norm_layer3 = self.norm()
+        self.norm_layer3 = self.norm() # TODO <- is not applied
 
     def forward(self, t, x):
         x = self.norm_layer1(x)

@@ -49,6 +49,7 @@ def compute_accuracy(model, data_loader, device):
     return total_correct/total
 
 def train_model_cached(model, file_path=None, **kwargs):
+    print("Experiment {}".format(file_path))
     if file_path and os.path.isfile(file_path):
         saved = torch.load(file_path)
         restored_args = saved['args']
@@ -118,7 +119,7 @@ def train_model(model, batch_size, epochs, test_batch_size = None, device="cpu",
         train_acc = compute_accuracy(model, train_loader, device=device)
         epoch_train_accuracies[epoch_nr] = train_acc
         if verbosity >= 1:
-            print("Epoch {}>> Train Accuracy: {} | Test Accuracy: {}")
+            print("Epoch {}>> Train Accuracy: {} | Test Accuracy: {}".format(epoch_nr, train_acc, test_acc))
 
             # print()
 
