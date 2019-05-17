@@ -5,7 +5,7 @@ from train_utils import *
 n_epochs = 23
 batch_size = 128
 batch_size_test = 1028
-device="cuda"
+device="cpu"
 
 # Baseline ResNet
 

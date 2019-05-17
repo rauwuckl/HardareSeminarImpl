@@ -41,7 +41,7 @@ def compute_accuracy(model, data_loader, device):
             output = model(img_device)
             prediction = torch.argmax(output, dim=-1)
 
-            correct = np.count_nonzero(prediction == label.to(device))
+            correct = torch.sum(prediction == label.to(device)).cpu().detach().int()
 
             total_correct += correct
             total += len(label)
