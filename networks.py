@@ -120,7 +120,7 @@ class ConvolutionalDynamicsFunction(nn.Module):
 
 class ODEBlock(nn.Module):
 
-    def __init__(self, dynamics_function, intermediate_values_to_compute=None, atol=1e-3, rtol=1e-3):
+    def __init__(self, dynamics_function, intermediate_values_to_compute=None, atol=1e-3, rtol=1e-3, device='cpu'):
         """
 
         :param dynamics_function:
@@ -136,11 +136,11 @@ class ODEBlock(nn.Module):
         self.rtol = rtol
 
         if intermediate_values_to_compute is None:
-            self.integration_time = torch.tensor([0.0 , 1.0])
+            self.integration_time = torch.tensor([0.0 , 1.0]).to(device)
         else:
             assert(intermediate_values_to_compute[0] == 0)
             assert(intermediate_values_to_compute[-1] == 1)
-            self.integration_time = torch.tensor(intermediate_values_to_compute)
+            self.integration_time = torch.tensor(intermediate_values_to_compute).to(device)
 
     def forward(self, x):
 

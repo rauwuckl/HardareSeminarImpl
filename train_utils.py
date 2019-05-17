@@ -4,8 +4,6 @@ import os
 from networks import *
 import numpy as np
 
-
-import torchvision.datasets as datasets
 from torchvision import datasets, transforms
 
 def get_data_loaders(batch_size, test_batch_size=None):
@@ -71,6 +69,7 @@ def train_model_cached(model, file_path=None, **kwargs):
             return model, accuracies
         else:
             to_save = {'state_dict': model.state_dict(), 'args': kwargs, 'accuracies': accuracies }
+            torch.save(to_save, file_path)
 
 
 def train_model(model, batch_size, epochs, test_batch_size = None, device="cpu", learning_rate=0.1, loss_op = nn.CrossEntropyLoss, verbosity=1, n_prints_per_epoch=100):
