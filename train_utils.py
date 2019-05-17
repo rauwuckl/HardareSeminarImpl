@@ -56,11 +56,12 @@ def train_model_cached(model, file_path=None, **kwargs):
         restored_args = saved['args']
 
         if restored_args != kwargs:
-            raise ValueError("For the given file_path, there already exists a cached network, that was produced with different parameters")
+            print("some Parameters were different")
+            # raise ValueError("For the given file_path, there already exists a cached network, that was produced with different parameters")
 
         state_dict = saved['state_dict']
 
-        model.load_state_dict() # now containing parameters
+        model.load_state_dict(state_dict) # now containing parameters
         return model, saved['accuracies']
 
     else:
@@ -72,9 +73,9 @@ def train_model_cached(model, file_path=None, **kwargs):
             to_save = {'state_dict': model.state_dict(), 'args': kwargs, 'accuracies': accuracies }
 
 
-def train_model(model, batch_size, epochs, device="cpu", learning_rate=0.1, loss_op = nn.CrossEntropyLoss, verbosity=1, n_prints_per_epoch=100):
+def train_model(model, batch_size, epochs, test_batch_size = None, device="cpu", learning_rate=0.1, loss_op = nn.CrossEntropyLoss, verbosity=1, n_prints_per_epoch=100):
 
-    train_loader, test_loader = get_data_loaders(batch_size=batch_size)
+    train_loader, test_loader = get_data_loaders(batch_size=batch_size, test_batch_size=test_batch_size)
     epoch_length = len(train_loader)
     print_every_n = epoch_length // n_prints_per_epoch
 

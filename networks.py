@@ -98,7 +98,7 @@ class ConvolutionalDynamicsFunction(nn.Module):
         """
         super(ConvolutionalDynamicsFunction, self).__init__()
         self.n_channels = n_channels
-        self.kernel_size=3
+        self.kernel_size=kernel_size
         self.time_dependent = time_dependent
 
         self.norm_layer1 = self.norm()
