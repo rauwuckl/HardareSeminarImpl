@@ -28,7 +28,7 @@ def get_data_loaders(batch_size, test_batch_size=None):
 
     return train_loader, test_loader
 
-def compute_accuracy(model, data_loader, device='cpu'):
+def compute_accuracy(model, data_loader, device):
     total_correct = 0
     total = 0
 
@@ -113,7 +113,7 @@ def train_model(model, batch_size, epochs, test_batch_size = None, device="cpu",
                 print("\r {:2}% done <> Current batch loss: {:1.4}".format( batch_id*100//epoch_length, loss.detach().float()), end='')
 
 
-        test_acc = compute_accuracy(model, test_loader)
+        test_acc = compute_accuracy(model, test_loader, device=device)
         epoch_test_accuracies[epoch_nr] = test_acc
 
         train_acc = compute_accuracy(model, train_loader)
