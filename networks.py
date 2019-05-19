@@ -121,6 +121,8 @@ class ConvolutionalDynamicsFunction(nn.Module):
         x = self.relu_layer2(x)
         x = self.conv_layer2(x, t)
 
+        x = self.norm_layer3(x)
+
         return x
 
 class ODEBlock(nn.Module):
