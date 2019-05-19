@@ -10,17 +10,23 @@ class Flatten(nn.Module):
 
 class ResidualBlock(nn.Module):
     def norm(self):
-        return nn.BatchNorm2d(self.n_channels)
+        if self.norm_type=="batch":
+            return nn.BatchNorm2d(self.n_channels)
+        elif self.norm_type=="group":
+            return nn.GroupNorm(num_groups=32, num_channels=self.n_channels) # 32 is the default group number suggesting in https://arxiv.org/pdf/1803.08494.pdf
+        else:
+            raise ValueError("unkown normalisation type")
 
     def conv(self):
         return nn.Conv2d(self.n_channels, self.n_channels, kernel_size=self.kernel_size, stride=1, padding=True)
 
 
-    def __init__(self, n_channels, kernel_size=3, cache_last_activation=False):
+    def __init__(self, n_channels, kernel_size=3, cache_last_activation=False, norm_type="batch"):
 
         super(ResidualBlock, self).__init__()
 
         self.n_channels = n_channels
+        self.norm_type = norm_type
         self.kernel_size = kernel_size
         self.cache_last_activation = cache_last_activation
 
@@ -84,23 +90,38 @@ class TimeDependentConv(nn.Module):
 
 
 class ConvolutionalDynamicsFunction(nn.Module):
+
     def norm(self):
-        return nn.BatchNorm2d(self.n_channels)
+        if self.norm_type=="batch":
+            return nn.BatchNorm2d(self.n_channels)
+        elif self.norm_type=="group":
+            return nn.GroupNorm(num_groups=32, num_channels=self.n_channels) # 32 is the default group number suggesting in https://arxiv.org/pdf/1803.08494.pdf
+        else:
+            raise ValueError("unkown normalisation type")
 
     def conv(self):
         return TimeDependentConv(self.n_channels, kernel_size=self.kernel_size, time_dependent=self.time_dependent)
 
-    def __init__(self, n_channels, kernel_size=3, time_dependent=True):
+    def reset_function_evaluations(self):
+        self.n_function_evaluations = 0
+
+    def get_function_evaluations(self):
+        return self.n_function_evaluations
+
+    def __init__(self, n_channels, kernel_size=3, time_dependent=True, norm_type="batch"):
         """
 
         :param n_channels:
         :param kernel_size:
-        :param time_dependent: wether the convlution should behave differently at different times t within the ODE Block
+        :param time_dependent: wether the convolution should behave differently at different times t within the ODE Block
         """
         super(ConvolutionalDynamicsFunction, self).__init__()
         self.n_channels = n_channels
         self.kernel_size=kernel_size
         self.time_dependent = time_dependent
+        self.norm_type = norm_type
+
+        self.reset_function_evaluations()
 
         self.norm_layer1 = self.norm()
         self.relu_layer1 = nn.ReLU(inplace=True)
@@ -110,9 +131,11 @@ class ConvolutionalDynamicsFunction(nn.Module):
         self.relu_layer2 = nn.ReLU(inplace=True)
         self.conv_layer2 = self.conv()
 
-        self.norm_layer3 = self.norm() # TODO <- is not applied
+        self.norm_layer3 = self.norm()
 
     def forward(self, t, x):
+        self.n_function_evaluations += 1
+
         x = self.norm_layer1(x)
         x = self.relu_layer1(x)
         x = self.conv_layer1(x, t)

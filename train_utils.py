@@ -1,5 +1,7 @@
 import torch
 import os
+import traceback
+import sys
 
 from networks import *
 import numpy as np
@@ -39,20 +41,23 @@ def compute_accuracy(model, data_loader, device):
             output = model(img_device)
             prediction = torch.argmax(output, dim=-1)
 
-            correct = torch.sum(prediction == label.to(device)).cpu().detach().int()
+            correct = torch.sum(prediction == label.to(device)).cpu().detach().float().item()
 
             total_correct += correct
+            # print(len(label))
             total += len(label)
 
         model.train()
 
-    return total_correct/total
+    return total_correct/float(total)
 
-def train_model_cached(model, file_path=None, **kwargs):
+def train_model_cached(model, file_path=None, device="cpu", **kwargs):
     print("Experiment {}".format(file_path))
     print(model)
+    kwargs["device"]=device
+
     if file_path and os.path.isfile(file_path):
-        saved = torch.load(file_path)
+        saved = torch.load(file_path, map_location=kwargs["device"])
         restored_args = saved['args']
 
         if restored_args != kwargs:
@@ -62,19 +67,81 @@ def train_model_cached(model, file_path=None, **kwargs):
         state_dict = saved['state_dict']
 
         model.load_state_dict(state_dict) # now containing parameters
-        return model, saved['accuracies']
+        return model, saved['stats']
 
     else:
-        model, accuracies = train_model(model, **kwargs)
+        try:
+            model, stats = train_model(model, **kwargs)
+        except Exception as e:
+            errormsg = traceback.format_exception(*sys.exc_info())
+            stats = errormsg
 
         if file_path is None:
-            return model, accuracies
+            return model, stats
         else:
-            to_save = {'state_dict': model.state_dict(), 'args': kwargs, 'accuracies': accuracies }
+            to_save = {'state_dict': model.state_dict(), 'args': kwargs, 'stats': stats }
             torch.save(to_save, file_path)
 
 
-def train_model(model, batch_size, epochs, test_batch_size = None, device="cpu", learning_rate=0.1, loss_op = nn.CrossEntropyLoss, verbosity=1, n_prints_per_epoch=100):
+
+class SpecialisedMetric:
+    def batch_forward(self, model):
+        pass
+    def batch_backward(self, model):
+        pass
+    def epoch(self, model):
+        pass
+    def get_summary_dict(self):
+        return dict()
+
+class ODE_Metrics(SpecialisedMetric):
+
+    def __init__(self):
+        self.function_evaluations_forward = list()
+        self.function_evaluations_backward = list()
+
+        self.all_epochs_forward = list()
+        self.all_epochs_backward = list()
+
+    def find_ode_dynamics(self, model):
+        for layer in model.children():
+            if isinstance(layer, ODEBlock):
+                return layer.dynamics_function
+
+    def batch_forward(self, model):
+        """ will be called after a batch went through the forward pass"""
+        dyn_function = self.find_ode_dynamics(model)
+
+        n = dyn_function.get_function_evaluations()
+        dyn_function.reset_function_evaluations()
+        self.function_evaluations_forward.append(n)
+        # print("{} function evaluations, forward".format(n))
+
+    def batch_backward(self, model):
+        """ will be called after a batch went through the backward pass"""
+        dyn_function = self.find_ode_dynamics(model)
+
+        n = dyn_function.get_function_evaluations()
+        dyn_function.reset_function_evaluations()
+        self.function_evaluations_backward.append(n)
+        # print("{} function evaluations, backward".format(n))
+
+    def epoch(self, model):
+        """"""
+        self.all_epochs_forward.append(self.function_evaluations_forward)
+        self.function_evaluations_forward = list()
+
+        self.all_epochs_backward.append(self.function_evaluations_backward)
+        self.function_evaluations_backward = list()
+
+    def get_summary_dict(self):
+        return dict(function_evals_forward = self.all_epochs_forward, function_evals_backward = self.all_epochs_backward)
+
+
+
+def train_model(model, batch_size, epochs, test_batch_size = None, device="cpu", learning_rate=0.1, loss_op = nn.CrossEntropyLoss, specialised_metric=None, verbosity=1, n_prints_per_epoch=100):
+    if specialised_metric is None:
+        specialised_metric = SpecialisedMetric()
 
     train_loader, test_loader = get_data_loaders(batch_size=batch_size, test_batch_size=test_batch_size)
     epoch_length = len(train_loader)
@@ -91,7 +158,7 @@ def train_model(model, batch_size, epochs, test_batch_size = None, device="cpu",
 
         print("Epoch {}".format(epoch_nr))
         model.train()
-        for batch_id, batch in enumerate(test_loader):
+        for batch_id, batch in enumerate(train_loader):
             optimizer.zero_grad()
 
             imgs, label = batch
@@ -100,10 +167,12 @@ def train_model(model, batch_size, epochs, test_batch_size = None, device="cpu",
             label_device = label.to(device)
 
             output = model(imgs_device)
+            specialised_metric.batch_forward( model=model )
+
             loss = loss_function(output, label_device)
             loss.backward()
             optimizer.step()
-
+            specialised_metric.batch_backward(model)
             if verbosity>=3:
                 print(loss)
 
@@ -123,9 +192,10 @@ def train_model(model, batch_size, epochs, test_batch_size = None, device="cpu",
             print("Epoch {}>> Train Accuracy: {} | Test Accuracy: {}".format(epoch_nr, train_acc, test_acc))
 
             # print()
+        specialised_metric.epoch(model)
 
-    return model, dict(train=epoch_train_accuracies, test=epoch_test_accuracies)
+    return model, dict(train_accuracy=epoch_train_accuracies, test_accuracy=epoch_test_accuracies, specialised_metric=specialised_metric.get_summary_dict())
 
 if __name__=="__main__":
-    model = nn.Sequential(*get_downsampling_layers(),*get_residual_blocks(1), *get_final_layers())
-    train_model_cached(model, batch_size=128, epochs=10, verbosity=3)
+    model = nn.Sequential(*get_downsampling_layers(), ODEBlock(ConvolutionalDynamicsFunction(64, time_dependent=False)), *get_final_layers())
+    train_model_cached(model, batch_size=128, epochs=10, verbosity=3, specialised_metric=ODE_Metrics())
