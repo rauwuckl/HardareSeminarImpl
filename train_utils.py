@@ -94,7 +94,7 @@ class SpecialisedMetric:
     def get_summary_dict(self):
         return dict()
 
-class ODE_Metrics(SpecialisedMetric):
+class ODEMetric(SpecialisedMetric):
 
     def __init__(self):
         self.function_evaluations_forward = list()
@@ -198,4 +198,4 @@ def train_model(model, batch_size, epochs, test_batch_size = None, device="cpu",
 
 if __name__=="__main__":
     model = nn.Sequential(*get_downsampling_layers(), ODEBlock(ConvolutionalDynamicsFunction(64, time_dependent=False)), *get_final_layers())
-    train_model_cached(model, batch_size=128, epochs=10, verbosity=3, specialised_metric=ODE_Metrics())
+    train_model_cached(model, batch_size=128, epochs=10, verbosity=3, specialised_metric=ODEMetric())

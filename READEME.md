@@ -8,3 +8,6 @@ pip install mpi4py
 
 # Further investigate
 BatchNorm only works with time dependent ODE and not with time independent ODE?
+
+
+* remove some parameters were different
