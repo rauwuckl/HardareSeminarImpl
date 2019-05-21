@@ -53,7 +53,7 @@ class ResidualBlock(nn.Module):
         out =  x + skip
 
         if self.cache_last_activation:
-            self.cache_last_activation = out
+            self.last_activation = out
 
         return out
 
@@ -166,7 +166,7 @@ class ODEBlock(nn.Module):
         self.rtol = rtol
 
         if intermediate_values_to_compute is None:
-            self.integration_time = torch.tensor([0.0 , 1.0]).to(device)
+            self.integration_time = torch.tensor([0.0, 1.0]).to(device)
         else:
             assert(intermediate_values_to_compute[0] == 0)
             assert(intermediate_values_to_compute[-1] == 1)
@@ -183,8 +183,8 @@ class ODEBlock(nn.Module):
         return out[-1]
 
 
-def get_residual_blocks(n_blocks):
-    layers = [ResidualBlock(64) for i in range(n_blocks)]
+def get_residual_blocks(n_blocks, cache_last_activation=None):
+    layers = [ResidualBlock(64, cache_last_activation=cache_last_activation) for i in range(n_blocks)]
     return layers
 
 
@@ -196,7 +196,7 @@ def get_downsampling_layers():
         nn.Conv2d(64, 64, kernel_size=4, stride=2, padding=1),
         nn.BatchNorm2d(64),
         nn.ReLU(inplace=True),
-        nn.Conv2d(64,64, kernel_size=4, stride=1)
+        nn.Conv2d(64, 64, kernel_size=4, stride=2, padding=1) #TODO kernel size 4, stride 2
     ]
     return layers
 
