@@ -51,18 +51,17 @@ def compute_accuracy(model, data_loader, device):
 
     return total_correct/float(total)
 
-def train_model_cached(model, file_path=None, device="cpu", **kwargs):
+def train_model_cached(model, file_path=None, device="cpu", print_model=True, **kwargs):
     print("Experiment {}".format(file_path))
-    print(model)
+    if print_model:
+        print(model)
+
     kwargs["device"]=device
 
     if file_path and os.path.isfile(file_path):
         saved = torch.load(file_path, map_location=kwargs["device"])
         restored_args = saved['args']
 
-        if restored_args != kwargs:
-            print("some Parameters were different")
-            # raise ValueError("For the given file_path, there already exists a cached network, that was produced with different parameters")
 
         state_dict = saved['state_dict']
 
@@ -133,6 +132,12 @@ class ODEMetric(SpecialisedMetric):
 
         self.all_epochs_backward.append(self.function_evaluations_backward)
         self.function_evaluations_backward = list()
+
+
+        dyn_function = self.find_ode_dynamics(model)
+        dyn_function.reset_function_evaluations()
+
+
 
     def get_summary_dict(self):
         return dict(function_evals_forward = self.all_epochs_forward, function_evals_backward = self.all_epochs_backward)

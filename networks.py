@@ -30,7 +30,6 @@ class ResidualBlock(nn.Module):
         self.kernel_size = kernel_size
         self.cache_last_activation = cache_last_activation
 
-        # self.relu_layer1 = nn.ReLU(inplace=True) #TODO
         self.norm_layer1 = self.norm()
         self.relu_layer1 = nn.ReLU(inplace=True)
         self.conv_layer1 = self.conv()
@@ -196,7 +195,7 @@ def get_downsampling_layers():
         nn.Conv2d(64, 64, kernel_size=4, stride=2, padding=1),
         nn.BatchNorm2d(64),
         nn.ReLU(inplace=True),
-        nn.Conv2d(64, 64, kernel_size=4, stride=2, padding=1) #TODO kernel size 4, stride 2
+        nn.Conv2d(64, 64, kernel_size=4, stride=2, padding=1)
     ]
     return layers
 
