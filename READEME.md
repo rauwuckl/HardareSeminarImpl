@@ -11,3 +11,8 @@ BatchNorm only works with time dependent ODE and not with time independent ODE?
 
 
 * remove some parameters were different
+
+# Instalation
+Install torchdiffeq from  https://github.com/rtqichen/torchdiffeq    
+then   
+``` pip install -r requirements.txt ```

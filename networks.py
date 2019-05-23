@@ -13,13 +13,13 @@ class ResidualBlock(nn.Module):
         if self.norm_type=="batch":
             return nn.BatchNorm2d(self.n_channels)
         elif self.norm_type=="group":
-            return nn.GroupNorm(num_groups=32, num_channels=self.n_channels) # 32 is the default group number suggesting in https://arxiv.org/pdf/1803.08494.pdf
+            return nn.GroupNorm(num_groups=32, num_channels=self.n_channels)
+            # 32 is the default group number suggested in https://arxiv.org/pdf/1803.08494.pdf
         else:
-            raise ValueError("unkown normalisation type")
+            raise ValueError("unknown normalisation type")
 
     def conv(self):
         return nn.Conv2d(self.n_channels, self.n_channels, kernel_size=self.kernel_size, stride=1, padding=True)
-
 
     def __init__(self, n_channels, kernel_size=3, cache_last_activation=False, norm_type="batch"):
 
@@ -57,29 +57,23 @@ class ResidualBlock(nn.Module):
         return out
 
 class TimeDependentConv(nn.Module):
-    # a convolution that also depends on the t parameter, (by appending a constant channel with value t in all pixels)
+    # a convolution that also depends on the t parameter (by appending a constant channel with value t in all pixels)
 
     def __init__(self, channels, kernel_size, time_dependent=True):
         """
-
         :param channels:
         :param kernel_size:
-        :param time_dependent: if False, the t gets ignored in the forward pass
+        :param time_dependent: if False, t gets ignored in the forward pass
         """
         super(TimeDependentConv, self).__init__()
-        # time_dependent = True
-        # self.time_independent_debug = False
 
-        self.time_dependent = time_dependent #or self.time_independent_debug
+        self.time_dependent = time_dependent
 
         self.conv_layer = nn.Conv2d(channels + self.time_dependent, channels, kernel_size=kernel_size, padding=True)
 
     def forward(self, x, t):
-        # if self.time_independent_debug:
-        #     t = 0
 
         if self.time_dependent:
-            # print(t)
             time_channel = torch.ones_like(x[:, :1, :, :]) * t # trick to get right shape, data type and device
             with_time = torch.cat((x, time_channel), 1)
         else:
@@ -87,16 +81,16 @@ class TimeDependentConv(nn.Module):
 
         return self.conv_layer(with_time)
 
-
 class ConvolutionalDynamicsFunction(nn.Module):
 
     def norm(self):
         if self.norm_type=="batch":
             return nn.BatchNorm2d(self.n_channels)
         elif self.norm_type=="group":
-            return nn.GroupNorm(num_groups=32, num_channels=self.n_channels) # 32 is the default group number suggesting in https://arxiv.org/pdf/1803.08494.pdf
+            return nn.GroupNorm(num_groups=32, num_channels=self.n_channels)
+            # 32 is the default group number suggesting in https://arxiv.org/pdf/1803.08494.pdf
         else:
-            raise ValueError("unkown normalisation type")
+            raise ValueError("unknown normalisation type")
 
     def conv(self):
         return TimeDependentConv(self.n_channels, kernel_size=self.kernel_size, time_dependent=self.time_dependent)
@@ -109,7 +103,6 @@ class ConvolutionalDynamicsFunction(nn.Module):
 
     def __init__(self, n_channels, kernel_size=3, time_dependent=True, norm_type="batch"):
         """
-
         :param n_channels:
         :param kernel_size:
         :param time_dependent: wether the convolution should behave differently at different times t within the ODE Block
@@ -152,7 +145,7 @@ class ODEBlock(nn.Module):
     def __init__(self, dynamics_function, intermediate_values_to_compute=None, atol=1e-3, rtol=1e-3, device='cpu'):
         """
 
-        :param dynamics_function:
+        :param dynamics_function: a function that maps the current state and time to a tensor of the same shape as the current state
         :param intermediate_values_to_compute: (optional) a numpy array of time values between 0, 1 for which the state is computed
         :param atol: absolute tolerance of ODE solution
         :param rtol: relative tolerance of ODE solution
@@ -182,7 +175,7 @@ class ODEBlock(nn.Module):
         return out[-1]
 
 
-def get_residual_blocks(n_blocks, cache_last_activation=None):
+def get_residual_blocks(n_blocks, cache_last_activation=False):
     layers = [ResidualBlock(64, cache_last_activation=cache_last_activation) for i in range(n_blocks)]
     return layers
 
@@ -215,50 +208,3 @@ def model_to_onnx(model, batch_size, file_path, channels=1, height=64, width=64)
     torch.onnx.export(model, dummy_input, file_path, verbose=True)
     return file_path
 
-if __name__ == "__main__":
-    print('hello')
-
-    # Get dataset size
-    mnist_shape = d5ds.dataset_shape('mnist')
-    print(mnist_shape)
-    classes, c, h, w = mnist_shape
-    BATCH_SIZE = 128
-
-    # model = nn.Sequential(*get_downsamplint_layers(), *get_final_layers())
-
-    # onnx_file = model_to_onnx(model, 128, "test.onnx")
-
-    onnx_file = d5nt.export_network("simple_cnn", BATCH_SIZE, classes=classes,
-                                 channels=c, height=h, width=w)
-
-    d5_model = d5.parser.load_and_parse_model(onnx_file)
-
-    INPUT_NODE = d5_model.get_input_nodes()[0].name
-    OUTPUT_NODE = d5_model.get_output_nodes()[0].name
-
-    train_set, test_set = d5ds.load_dataset('mnist', INPUT_NODE, 'labels')
-    d5_model.add_operation(d5.ops.LabelCrossEntropy([OUTPUT_NODE, 'labels'], 'loss'))
-
-    train_sampler = d5.ShuffleSampler(train_set, BATCH_SIZE)
-    test_sampler = d5.ShuffleSampler(test_set, BATCH_SIZE)
-
-    executor = d5pt.from_model(d5_model)
-
-    optimizer = d5ref.GradientDescent(executor, 'loss', 0.1)
-
-    EPOCHS = 2
-    d5.test_training(executor, train_sampler, test_sampler, optimizer,
-                     EPOCHS, BATCH_SIZE, OUTPUT_NODE)
-
-    # executor = d5pt.PyTorchGraphExecutor(model)
-
-
-
-
-
-    # onnx_file = d5nt.export_network('simple_cnn', BATCH_SIZE, classes=classes,
-    #                                 channels=c, height=h, width=w)
-    # model = d5.parser.load_and_parse_model(onnx_file)
-
-
-    print()

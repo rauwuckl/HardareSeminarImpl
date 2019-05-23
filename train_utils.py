@@ -44,7 +44,6 @@ def compute_accuracy(model, data_loader, device):
             correct = torch.sum(prediction == label.to(device)).cpu().detach().float().item()
 
             total_correct += correct
-            # print(len(label))
             total += len(label)
 
         model.train()
@@ -61,7 +60,6 @@ def train_model_cached(model, file_path=None, device="cpu", print_model=True, **
     if file_path and os.path.isfile(file_path):
         saved = torch.load(file_path, map_location=kwargs["device"])
         restored_args = saved['args']
-
 
         state_dict = saved['state_dict']
 
@@ -114,7 +112,6 @@ class ODEMetric(SpecialisedMetric):
         n = dyn_function.get_function_evaluations()
         dyn_function.reset_function_evaluations()
         self.function_evaluations_forward.append(n)
-        # print("{} function evaluations, forward".format(n))
 
     def batch_backward(self, model):
         """ will be called after a batch went through the backward pass"""
@@ -123,10 +120,9 @@ class ODEMetric(SpecialisedMetric):
         n = dyn_function.get_function_evaluations()
         dyn_function.reset_function_evaluations()
         self.function_evaluations_backward.append(n)
-        # print("{} function evaluations, backward".format(n))
 
     def epoch(self, model):
-        """"""
+        """ will be called after each epoch """
         self.all_epochs_forward.append(self.function_evaluations_forward)
         self.function_evaluations_forward = list()
 
@@ -178,13 +174,8 @@ def train_model(model, batch_size, epochs, test_batch_size = None, device="cpu",
             loss.backward()
             optimizer.step()
             specialised_metric.batch_backward(model)
-            if verbosity>=3:
-                print(loss)
 
-            if verbosity==2 and (batch_id % print_every_n) == 0:
-                # if verbosity >= 3:
-                #     print(loss)
-                # print('hallo')
+            if verbosity>=2 and (batch_id % print_every_n) == 0:
                 print("\r {:2}% done <> Current batch loss: {:1.4}".format( batch_id*100//epoch_length, loss.detach().float()), end='')
 
 
@@ -196,11 +187,7 @@ def train_model(model, batch_size, epochs, test_batch_size = None, device="cpu",
         if verbosity >= 1:
             print("Epoch {}>> Train Accuracy: {} | Test Accuracy: {}".format(epoch_nr, train_acc, test_acc))
 
-            # print()
         specialised_metric.epoch(model)
 
     return model, dict(train_accuracy=epoch_train_accuracies, test_accuracy=epoch_test_accuracies, specialised_metric=specialised_metric.get_summary_dict())
 
-if __name__=="__main__":
-    model = nn.Sequential(*get_downsampling_layers(), ODEBlock(ConvolutionalDynamicsFunction(64, time_dependent=False)), *get_final_layers())
-    train_model_cached(model, batch_size=128, epochs=10, verbosity=3, specialised_metric=ODEMetric())

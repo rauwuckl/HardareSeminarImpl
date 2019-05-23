@@ -5,8 +5,7 @@ from train_utils import *
 n_epochs = 42
 batch_size = 128
 batch_size_test = 1028
-device = "cuda"
-
+device = "cpu"
 
 standard_ode_group = nn.Sequential(*get_downsampling_layers(), ODEBlock(ConvolutionalDynamicsFunction(64, time_dependent=True, norm_type="group"), device=device), *get_final_layers())
 train_model_cached(standard_ode_group, file_path="cached_models/ode_group.pth", batch_size=batch_size, test_batch_size=batch_size_test, epochs=n_epochs, verbosity=2, device=device, specialised_metric=ODEMetric())
