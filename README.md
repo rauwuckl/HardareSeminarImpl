@@ -35,7 +35,7 @@ Details can be found in `Demo.ipynb`.
 ### Additional Experiments
 * I tried a residual neural network architecture with the same number of parameters as the ODE-Net in [1]. 
 This performed better and thus calls into question the authors claim that the ODE-Net is more parameter efficient.
-* I tried an ODE-Net architecture where the dynamics function is not time dependent. This performed only slightly worse
+* I tried an ODE-Net architecture where the dynamics function is not time dependent. This performed only marginally worse.
 
 ### Visualisations
 Continuous transformation of the hidden state in the ODE-Net with associated probabilities for the output label.
@@ -43,3 +43,7 @@ Continuous transformation of the hidden state in the ODE-Net with associated pro
 
 Discrete transformation of the hidden state in the ResNet with associated probabilities for the output label.
 ![resnet](resnet.gif)
+
+# Sources
+[1] [Neural Ordinary Differential Equations; Ricky T. Q. Chen, Yulia Rubanova, Jesse Bettencourt, David Duvenaud (2019)](https://arxiv.org/abs/1806.07366) 
+[2] https://github.com/rtqichen/torchdiffeq
