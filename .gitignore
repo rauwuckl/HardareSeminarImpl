@@ -2,5 +2,4 @@
 .ipynb_checkpoints/
 __pycache__/
 data/
-cached_models/
 .DS_Store
