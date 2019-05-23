@@ -1,21 +1,15 @@
-brew install mpich
-pip install mpi4py
 
-
-* experiment no time
-* experiment single res block
-* visualisations
-
-# Further investigate
-BatchNorm only works with time dependent ODE and not with time independent ODE?
-
-
-* remove some parameters were different
 
 # Installation
 Install torchdiffeq from  https://github.com/rtqichen/torchdiffeq    
 then   
 ``` pip install -r requirements.txt ```
+
+The following might be necessary on Mac OS to enable the generation of GIFs.
+```
+brew install mpich
+pip install mpi4py
+```
 
 # Usage 
 This repository already comes with logs and weights which can be found in the directory  `cached_models`. 
@@ -45,5 +39,5 @@ Discrete transformation of the hidden state in the ResNet with associated probab
 ![resnet](resnet.gif)
 
 # Sources
-[1] [Neural Ordinary Differential Equations; Ricky T. Q. Chen, Yulia Rubanova, Jesse Bettencourt, David Duvenaud (2019)](https://arxiv.org/abs/1806.07366) 
+[1] [Neural Ordinary Differential Equations; Ricky T. Q. Chen, Yulia Rubanova, Jesse Bettencourt, David Duvenaud (2019)](https://arxiv.org/abs/1806.07366)     
 [2] https://github.com/rtqichen/torchdiffeq
